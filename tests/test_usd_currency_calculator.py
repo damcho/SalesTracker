@@ -1,7 +1,7 @@
 import unittest
 from app.usd_currency_calculator import CurrencyConversion, USDCurrencyCalculator
 
-class test_usd_currency_calculator_tests(unittest.TestCase):
+class test_usd_currency_calculator(unittest.TestCase):
 
     def test_adds_usd_currenciy_conversions_to_initial_currencies(self):
         initial_currencies = [
