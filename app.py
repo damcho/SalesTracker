@@ -1,5 +1,7 @@
 from flask import Flask, request, jsonify
 import requests
+from CurrencyConversion import CurrencyConversion
+from CurrencyTransformer import CurrencyTransformer
 
 app = Flask(__name__)
 
@@ -16,8 +18,12 @@ def before_request():
             # Transform the response (e.g., adding a custom key-value pair)
             data = response.json()
 
+            currencyConversionsArray = [CurrencyConversion(currencyconversion['from'], currencyconversion['to'], currencyconversion['rate']) for currencyconversion in data]
+            addedCurrencies = CurrencyTransformer.currencies_to_usd(currencies=currencyConversionsArray)
             # Add the transformed data to the request context (you can also modify the response directly here)
-            request.transformed_data = data
+            currencies_conversions_json_list = [added_currency_conversion.to_dict() for added_currency_conversion in addedCurrencies]
+
+            request.transformed_data = currencies_conversions_json_list
         else:
             request.transformed_data = {"error": "External request failed"}
 
