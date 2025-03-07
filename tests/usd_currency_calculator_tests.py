@@ -1,6 +1,5 @@
 import unittest
-from CurrencyTransformer import CurrencyConversion, CurrencyTransformer
-
+from app.usd_currency_calculator import CurrencyConversion, USDCurrencyCalculator
 
 class TestCurrencyConverter(unittest.TestCase):
 
@@ -34,7 +33,7 @@ class TestCurrencyConverter(unittest.TestCase):
             CurrencyConversion(from_currency="JPY", to_currency="USD", rate=0.00826)
         }
         
-        added_currencies = CurrencyTransformer.currencies_to_usd(initial_currencies)
+        added_currencies = USDCurrencyCalculator.add_usd_currency_conversions(initial_currencies)
         
         # Test if the counts are equal
         self.assertEqual(len(added_currencies), len(expected_added_currencies))

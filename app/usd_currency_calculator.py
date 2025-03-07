@@ -1,7 +1,7 @@
 from typing import List, Set
 from CurrencyConversion import CurrencyConversion, CurrencyConversionError
 
-class CurrencyTransformer:
+class USDCurrencyCalculator:
     
     @staticmethod
     def add_currency_conversions(for_currency: str, to_currencies: List[CurrencyConversion]) -> Set[CurrencyConversion]:
@@ -17,9 +17,9 @@ class CurrencyTransformer:
         return currencies_set
     
     @staticmethod
-    def currencies_to_usd(currencies: List[CurrencyConversion]) -> List[CurrencyConversion]:
+    def add_usd_currency_conversions(currencies: List[CurrencyConversion]) -> List[CurrencyConversion]:
         currencies_plus_inverted_usd_conversions = list(
-            CurrencyTransformer.add_currency_conversions(for_currency="USD", to_currencies=currencies)
+            USDCurrencyCalculator.add_currency_conversions(for_currency="USD", to_currencies=currencies)
         )
         currencies_plus_usd_conversions = currencies_plus_inverted_usd_conversions.copy()
 
@@ -28,7 +28,7 @@ class CurrencyTransformer:
         ]
 
         for missing_usd_conversion in missing_usd_currency_conversions:
-            rate = CurrencyTransformer.usd_conversion_rate(
+            rate = USDCurrencyCalculator.usd_conversion_rate(
                 missing_usd_conversion, currencies_plus_inverted_usd_conversions
             )
             currencies_plus_usd_conversions.append(
@@ -53,7 +53,7 @@ class CurrencyTransformer:
         
         for a_conversion in filtered_conversions:
             try:
-                return new_currency.rate * CurrencyTransformer.usd_conversion_rate(a_conversion, currency_conversions)
+                return new_currency.rate * USDCurrencyCalculator.usd_conversion_rate(a_conversion, currency_conversions)
             except CurrencyConversionError:
                 continue
         
