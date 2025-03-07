@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 import requests
-from app.CurrencyConversion import CurrencyConversion
-from app.usd_currency_calculator import USDCurrencyCalculator
+from usd_conversions_app.currency_conversion import CurrencyConversion
+from usd_conversions_app.usd_currency_calculator import USDCurrencyCalculator
 
 app = Flask(__name__)
 

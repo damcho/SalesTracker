@@ -1,4 +1,3 @@
-import json
 
 class CurrencyConversion:
     def __init__(self, from_currency: str, to_currency: str, rate: float):

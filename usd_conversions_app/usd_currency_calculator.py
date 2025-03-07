@@ -1,5 +1,5 @@
 from typing import List, Set
-from CurrencyConversion import CurrencyConversion, CurrencyConversionError
+from usd_conversions_app.currency_conversion import CurrencyConversion, CurrencyConversionError
 
 class USDCurrencyCalculator:
     

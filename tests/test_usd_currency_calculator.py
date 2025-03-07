@@ -1,5 +1,5 @@
 import unittest
-from app.usd_currency_calculator import CurrencyConversion, USDCurrencyCalculator
+from usd_conversions_app.usd_currency_calculator import CurrencyConversion, USDCurrencyCalculator
 
 class test_usd_currency_calculator(unittest.TestCase):
 
