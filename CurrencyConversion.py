@@ -1,3 +1,5 @@
+import json
+
 class CurrencyConversion:
     def __init__(self, from_currency: str, to_currency: str, rate: float):
         self.from_currency = from_currency
@@ -13,6 +15,13 @@ class CurrencyConversion:
 
     def __hash__(self):
         return hash((self.from_currency, self.to_currency, self.rate))
+    
+    def to_dict(self):
+        return {
+            'from': self.from_currency,
+            'to': self.to_currency,
+            'rate': self.rate
+        }
 
 
 class CurrencyConversionError(Exception):
