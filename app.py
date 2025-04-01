@@ -20,6 +20,7 @@ def before_request():
                   currencyconversion['rate']
                 ) for currencyconversion in ed_rates
             ]
+
             ed_rates_plus_added_usd_conversions = USDCurrencyCalculator.add_usd_currency_conversions(
                 currencies=currencyConversionsArray
             )

@@ -1,62 +1,76 @@
 from typing import List, Set
 from usd_conversions_app.currency_conversion import CurrencyConversion, CurrencyConversionError
+from usd_conversions_app.currency_node import CurrencyNode
 
 class USDCurrencyCalculator:
-    
-    @staticmethod
-    def add_currency_conversions(for_currency: str, to_currencies: List[CurrencyConversion]) -> Set[CurrencyConversion]:
-        currencies_set = set(to_currencies)
-        for a_currency in to_currencies:
-            if a_currency.from_currency == for_currency:
-                inverted_conversion = CurrencyConversion(
-                    from_currency=a_currency.to_currency,
-                    to_currency=a_currency.from_currency,
-                    rate=1 / a_currency.rate
-                )
-                currencies_set.add(inverted_conversion)
-        return currencies_set
-    
-    @staticmethod
-    def add_usd_currency_conversions(currencies: List[CurrencyConversion]) -> List[CurrencyConversion]:
-        currencies_plus_inverted_usd_conversions = list(
-            USDCurrencyCalculator.add_currency_conversions(for_currency="USD", to_currencies=currencies)
-        )
-        currencies_plus_usd_conversions = currencies_plus_inverted_usd_conversions.copy()
-
-        missing_usd_currency_conversions = [
-            currency for currency in currencies if currency.to_currency != "USD" and currency.from_currency != "USD"
-        ]
-
-        for missing_usd_conversion in missing_usd_currency_conversions:
-            rate = USDCurrencyCalculator.usd_conversion_rate(
-                missing_usd_conversion, currencies_plus_inverted_usd_conversions
-            )
-            currencies_plus_usd_conversions.append(
-                CurrencyConversion(
-                    from_currency=missing_usd_conversion.from_currency,
-                    to_currency="USD",
-                    rate=rate
-                )
-            )
-
-        return currencies_plus_usd_conversions
 
     @staticmethod
-    def usd_conversion_rate(new_currency: CurrencyConversion, currency_conversions: List[CurrencyConversion]) -> float:
-        for currency_conversion in currency_conversions:
-            if currency_conversion.from_currency == new_currency.to_currency and currency_conversion.to_currency == "USD":
-                return currency_conversion.rate
+    def make_currency_conversions_nodes_graph(currency_conversions: List[CurrencyConversion]) -> List[CurrencyNode]:
+        currency_nodes = [CurrencyNode(currency_conversion) for currency_conversion in currency_conversions]
         
-        filtered_conversions = [
-            conversion for conversion in currency_conversions if conversion.from_currency == new_currency.to_currency
-        ]
+        for node in currency_nodes:
+            next_nodes = [a_currency_node for a_currency_node in currency_nodes
+                          if node.currency_conversion.to_currency == a_currency_node.currency_conversion.from_currency]
+            node.next_currency_nodes.extend(next_nodes)
         
-        for a_conversion in filtered_conversions:
+        return currency_nodes
+
+    @staticmethod
+    def calculate_rate(currency: str, from_currency_node: CurrencyNode) -> float:
+        if from_currency_node.currency_conversion.to_currency == "USD":
+            return from_currency_node.currency_conversion.rate
+
+        for next_currency_node in from_currency_node.next_currency_nodes:
             try:
-                return new_currency.rate * USDCurrencyCalculator.usd_conversion_rate(a_conversion, currency_conversions)
+                return from_currency_node.currency_conversion.rate * USDCurrencyCalculator.calculate_rate(currency, next_currency_node)
             except CurrencyConversionError:
                 continue
         
-        raise CurrencyConversionError(f"Unable to convert {new_currency.from_currency} to USD.")
+        raise CurrencyConversionError(f"Unable to convert {currency} to USD")
 
+    @staticmethod
+    def usd_conversion(currency: str, currency_nodes: List[CurrencyNode]) -> CurrencyConversion:
+        starting_nodes = [node for node in currency_nodes if node.currency_conversion.from_currency == currency]
 
+        for currency_node in starting_nodes:
+            try:
+                return CurrencyConversion(
+                    from_currency=currency,
+                    to_currency="USD",
+                    rate=USDCurrencyCalculator.calculate_rate(currency, currency_node)
+                )
+            except CurrencyConversionError:
+                continue
+        
+        raise CurrencyConversionError(f"Unable to convert {currency} to USD")
+
+    @staticmethod
+    def add_currency_conversions(currency: str, currencies: List[CurrencyConversion]) -> Set[CurrencyConversion]:
+        currencies_set = set(currencies)
+        for a_currency in currencies:
+            if a_currency.from_currency == currency:
+                currencies_set.add(
+                    CurrencyConversion(from_currency=a_currency.to_currency, to_currency=a_currency.from_currency, rate=1 / a_currency.rate)
+                )
+        return currencies_set
+
+    @staticmethod
+    def get_missing_currency_conversions_to_usd(currencies: List[CurrencyConversion]) -> List[str]:
+        return [currency_conversion.from_currency for currency_conversion in currencies
+                if currency_conversion.to_currency != "USD" and currency_conversion.from_currency != "USD"]
+
+    @staticmethod
+    def currencies_to_usd(currencies: List[CurrencyConversion]) -> List[CurrencyConversion]:
+        currencies_plus_inverted_usd_conversions = list(USDCurrencyCalculator.add_currency_conversions("USD", currencies))
+        currencies_plus_usd_conversions = currencies_plus_inverted_usd_conversions
+
+        missing_usd_currency_conversions = USDCurrencyCalculator.get_missing_currency_conversions_to_usd(currencies_plus_usd_conversions)
+
+        currency_graph = USDCurrencyCalculator.make_currency_conversions_nodes_graph(currencies_plus_inverted_usd_conversions)
+
+        for missing_currency_conversion in missing_usd_currency_conversions:
+            currencies_plus_usd_conversions.append(
+                USDCurrencyCalculator.usd_conversion(missing_currency_conversion, currency_graph)
+            )
+
+        return currencies_plus_usd_conversions
