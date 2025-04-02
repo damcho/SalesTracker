@@ -11,7 +11,11 @@
 - gunicorn
 
 ## USD Currency Calculator
+
 In order to calculate the missing USD conversions the USD currency calculator does the following steps
+
+### Adds inverted Currency Conversions
+
 - from the original conversion rates, it checks if any of the currency conversions has `USD` as the convertible currency, and inverts it by making a `USD` convertible currency.
 For example if we have 
 
@@ -23,16 +27,26 @@ then the algorithm adds
 CurrencyConversion(from: "EUR", to: "USD", rate: 1 / 1.2)
 ```
 
+### Creates Currency conversions Graph
+
+- Creates a one way graph of Linked Nodes where each node contains a currency conversion and a reference to an array of other nodes where the `to_currency` field of the current node, matches the `from_currency` field of the linked nodes
+
+### Create missing currency conversions
+
 - Filter the currencies that already have a `USD` conversion
-- From the filtered currencies it iterates on each one by checking if the `to_currency` field of the rest of the currencies is `USD` in which case it returns the conversion rate. Otherwise, it calls recursively with another currency that has the `to_currency` field equal to the `from_curency` of the previous currency conversion object. So for esample
-if we had 
-```
-[
-    (from_currency: "ARS", to_currency: "EUR"),
-    (from_currency: "EUR", to_currency: "GBP"),
-    (from_currency: "GBP", to_currency: "USD")
-]
-```
-then the algorithm would grab the missing USD conversion `(from_currency: "ARS", to_currency: "EUR")` and then check recursively over the currencies that connect the original one through the `to_currency` field until it finds that there is a currency `to_currency` field that is equal to `USD` and multiply the rate with the previous conversion rates.
+- From the filtered currencies it iterates on each one and calculates the USD currency conversion by finding the `starting nodes` (nodes that contain the `from_currency` field for the currency we want to create a conversion) And follows the node's linked connections until it finds a destination with a USD conversion. If there isn't one, it throws an error and starts over from another starting node.
 
+## Known Issues
+The original currencies data source should not create a graph that contains cycles since this could create an infinite loop when building a USD conversion
 
+for example 
+```
+EUR -> ARS -----> ARS -> JPY ------> JPY -> EUR
+```
+Is an invalid graph configuration.
+
+```
+EUR -> ARS -----> ARS -> JPY ------> JPY -> USD
+```
+
+Is a valid graph configuration
